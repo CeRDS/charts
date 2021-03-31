@@ -1,0 +1,22 @@
+# Default values for mytardis.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+global:
+  postgresql:
+    postgresqlDatabase: "mytardis"
+    postgresqlUsername: "mytardis"
+    postgresqlPassword: "CHANGEME"
+    #servicePort: "5432"
+
+mytardis-web:
+  enabled: true
+  settings: {}
+
+postgresql:
+  enabled: false
+
+rabbitmq:
+  enabled: false
+  auth:
+    username: "mytardis"

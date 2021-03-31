@@ -1,0 +1,3 @@
+.*.swp
+mytardis/tmp/
+**/charts/*.tgz

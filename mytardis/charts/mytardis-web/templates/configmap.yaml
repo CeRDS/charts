@@ -1,0 +1,158 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "mytardis-web.fullname" . }}
+  labels:
+    {{- include "mytardis-web.labels" . | nindent 4 }}
+data:
+  {{- with .Values.settings }}
+  settings.py: |
+    from datetime import timedelta
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+    from .default_settings import *
+
+    DEBUG = {{ if .debug }} True {{ else }} False {{ end }}
+    STATIC_ROOT = {{ .static_files_path | quote }}
+    DEFAULT_STORAGE_BASE_DIR = {{ .default_store_path | quote }}
+    CHUNK_STORAGE = {{ .chunks_store_path | quote }}
+    METADATA_STORE_PATH = {{ .metadata_store_path | quote }}
+    EMAIL_HOST = {{ .email.host | quote }}
+    EMAIL_PORT = {{ .email.port | quote }}
+    DEFAULT_FROM_EMAIL = {{ .email.from | quote }}
+    SERVER_EMAIL = {{ .email.server | quote }}
+    ADMINS = [
+    {{- range .admins }}
+        ({{ .name | quote }}, {{ .email | quote }}),
+    {{- end }}
+    ]
+    MANAGERS = [
+    {{- range .managers }}
+        ({{ .name | quote }}, {{ .email | quote }}),
+    {{- end }}
+    ]
+    INSTALLED_APPS += (
+    {{- range .installed_apps }}
+        {{ . | quote }}
+    {{- end }}
+    )
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': True,
+        'loggers': {
+            '': {
+                'level': 'DEBUG',
+                'propogate': True,
+                'handlers': ['console']
+            }
+        },
+        'handlers': {
+            'console': {
+                'class': 'logging.StreamHandler',
+                'stream': 'ext://sys.stdout'
+            }
+        }
+    }
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_ORIGINAL_PROTO', 'https')
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    DEFAULT_ARCHIVE_FORMATS = ['tar']
+    REDIS_VERIFY_MANAGER = False
+    {{- if .sftp }}
+    {{- with .sftp }}
+    # SFTP settings
+    SFTP_GEVENT = {{ .gevent | quote }}
+    SFTP_HOST_KEY = {{ .host_key | quote }}
+    SFTP_PORT = {{ .port | quote }}
+    SFTP_USERNAME_ATTRIBUTE = {{ .username_attribute | quote }}
+    {{- end }}
+    {{- end }}
+    {{- if .auth_providers }}
+    AUTH_PROVIDERS = (
+      {{- range .auth_providers }}
+        {{ . | quote }},
+      {{- end }}
+    )
+    {{- end }}
+    {{- if .group_providers }}
+    GROUP_PROVIDERS = (
+      {{- range .group_providers }}
+        {{ . | quote }},
+      {{- end }}
+    )
+    {{- end }}
+    {{- if .authentication_backends }}
+    AUTHENTICATION_BACKENDS = (
+      {{- range .authentication_backends }}
+        {{ . | quote }},
+      {{- end }}
+    )
+    {{- end }}
+        
+    # Context processors
+    #TEMPLATES[0]['OPTIONS']['context_processors'].extend(
+    #    data.get('context_processors', []))
+
+    # Override default middleware if specified in yaml data:
+    #if 'middleware' in data:
+    #    MIDDLEWARE = data.get('middleware')
+
+    # Overridable login views
+    {{- if .login_views }}
+    #if 'login_views' in data:
+    #    LOGIN_VIEWS_FROM_YAML = data.get('login_views')
+    #    LOGIN_VIEWS = { int(key): LOGIN_VIEWS_FROM_YAML[key] for key in LOGIN_VIEWS_FROM_YAML.keys() }
+    {{- end }}
+
+    CELERY_RESULT_BACKEND = 'amqp'
+    CELERY_QUEUES += (
+        Queue('filters', Exchange('filters'),
+              routing_key='filters',
+              queue_arguments={'x-max-priority': MAX_TASK_PRIORITY}),
+    )
+    {{- if .celerybeat_schedule }}
+    #CELERYBEAT_SCHEDULE = {
+    #  {{- range $name,$params := .celerybeat_schedule }}
+    #    {{ $name | quote }} = {
+    #        'task': {{ $params.task | quote }},
+    #        'schedule': timedelta(
+    #            days={{ $params.schedule }}.get('days', 0),
+    #            seconds={{ $params.schedule }}.get('seconds', 0),
+    #            microseconds={{ $params.schedule }}.get('microseconds', 0),
+    #            milliseconds={{ $params.schedule }}.get('milliseconds', 0),
+    #            minutes={{ $params.schedule }}.get('minutes', 0),
+    #            hours={{ $params.schedule }}.get('hours', 0),
+    #            weeks={{ $params.schedule }}.get('weeks', 0),
+    #        ),
+            #'kwargs': params.get('kwargs', {'priority': DEFAULT_TASK_PRIORITY})
+            #    }
+      {{- end }}
+    }
+    {{- end }}
+
+    from .secrets import *
+  {{- end }}
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "mytardis-web.fullname" . }}-nginx
+  labels:
+    {{- include "mytardis-web.labels" . | nindent 4 }}
+data:
+  default.conf: |
+    server {
+      listen       {{ .Values.static.service.port }};
+      server_name  {{ .Values.static.host | default "localhost" }};
+
+      location / {
+          root   /usr/share/nginx/html;
+          index  index.html index.htm;
+      }
+
+      error_page   500 502 503 504  /50x.html;
+      location = /50x.html {
+          root   /usr/share/nginx/html;
+      }
+    }
