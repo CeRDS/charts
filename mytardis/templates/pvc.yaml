@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ include "mytardis-web.fullname" . }}-files-store
+  name: {{ include "mytardis.fullname" . }}-files-store
   labels:
-    {{- include "mytardis-web.labels" . | nindent 4 }}
+    {{- include "mytardis.labels" . | nindent 4 }}
 spec:
   {{- with .Values.settings.file_store }}
   accessModes: [ "ReadWriteMany" ]
@@ -18,9 +18,9 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ include "mytardis-web.fullname" . }}-receive
+  name: {{ include "mytardis.fullname" . }}-receive
   labels:
-    {{- include "mytardis-web.labels" . | nindent 4 }}
+    {{- include "mytardis.labels" . | nindent 4 }}
 spec:
   {{- with .Values.settings.default.receiving_dir }}
   accessModes: [ "ReadWriteMany" ]

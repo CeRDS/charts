@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "mytardis-web.fullname" . }}
+  name: {{ include "mytardis.fullname" . }}
   labels:
-    {{- include "mytardis-web.labels" . | nindent 4 }}
+    {{- include "mytardis.labels" . | nindent 4 }}
 data:
   {{- with .Values.settings }}
   settings.py: |
@@ -21,8 +21,8 @@ data:
       {{- range .allowed_hosts }}
         {{ . | quote }},
       {{- end }}
-        '{{ include "mytardis-web.fullname" $ }}-django.{{ $.Release.Namespace }}.svc.{{ $.Values.global.clusterDomain }}',
-        '{{ include "mytardis-web.fullname" $ }}-django',
+        '{{ include "mytardis.fullname" $ }}-django.{{ $.Release.Namespace }}.svc.{{ $.Values.global.clusterDomain }}',
+        '{{ include "mytardis.fullname" $ }}-django',
         ".localhost",
         "127/8",
         "[::1]",
@@ -38,7 +38,7 @@ data:
     # CELERY = {} located in Secret
     CHUNK_STORAGE = {{ .chunks_store_path | quote }}
     # DATABASES = {} located in Secret
-    DEBUG = {{ if .debug }} True {{ else }} False {{ end }}
+    DEBUG = {{ if .debug }}True{{ else }}False{{ end }}
     DEFAULT_FROM_EMAIL = {{ .default.from_email | quote }}
     DEFAULT_INSTITUTION = {{ .default.institution | quote }}
     FILE_STORE_PATH = {{ .file_store.path | quote }}
@@ -59,7 +59,7 @@ data:
     EMAIL_HOST = {{ .email.host | quote }}
     EMAIL_PORT = {{ .email.port | quote }}
     DEFAULT_FROM_EMAIL = {{ .email.from | quote }}
-    SERVER_EMAIL = {{ .email.server | quote }}
+    SERVER_EMAIL = {{ .email.host | quote }}
     EMAIL_SUBJECT_PREFIX = {{ .email.subject_prefix | quote }}
 
     MANAGERS = [
@@ -83,7 +83,7 @@ data:
 
     LOGGING = {
         'version': 1,
-        'disable_existing_loggers': True,
+        'disable_existing_loggers': False,
         'loggers': {
             '': {
                 'level': 'DEBUG',
@@ -149,17 +149,19 @@ data:
     #    LOGIN_VIEWS = { int(key): LOGIN_VIEWS_FROM_YAML[key] for key in LOGIN_VIEWS_FROM_YAML.keys() }
     {{- end }}
 
-    CELERY_RESULT_BACKEND = 'amqp'
+    CELERY_RESULT_BACKEND = {{ $.Values.celery.worker.result.backend | quote }}
     CELERY_QUEUES += (
         Queue('filters', Exchange('filters'),
               routing_key='filters',
               queue_arguments={'x-max-priority': MAX_TASK_PRIORITY}),
     )
-    {{- if .celerybeat_schedule }}
-    #CELERYBEAT_SCHEDULE = {
-    #  {{- range $name,$params := .celerybeat_schedule }}
-    #    {{ $name | quote }} = {
-    #        'task': {{ $params.task | quote }},
+    {{- if $.Values.celery.beat.schedule }}
+    CELERYBEAT_SCHEDULE = {
+      {{- range $name,$params := $.Values.celery.beat.schedule }}
+        {{ $name | quote }}: {
+            'task': {{ $params.task | quote }},
+            'schedule': {{ $params.schedule }},
+            'kwargs': {'priority': DEFAULT_TASK_PRIORITY},
     #        'schedule': timedelta(
     #            days={{ $params.schedule }}.get('days', 0),
     #            seconds={{ $params.schedule }}.get('seconds', 0),
@@ -169,8 +171,8 @@ data:
     #            hours={{ $params.schedule }}.get('hours', 0),
     #            weeks={{ $params.schedule }}.get('weeks', 0),
     #        ),
-            #'kwargs': params.get('kwargs', {'priority': DEFAULT_TASK_PRIORITY})
-            #    }
+    #        'kwargs': params.get('kwargs', {'priority': DEFAULT_TASK_PRIORITY})
+        }
       {{- end }}
     }
     {{- end }}
@@ -182,9 +184,9 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "mytardis-web.fullname" . }}-nginx
+  name: {{ include "mytardis.fullname" . }}-nginx
   labels:
-    {{- include "mytardis-web.labels" . | nindent 4 }}
+    {{- include "mytardis.labels" . | nindent 4 }}
 data:
   default.conf: |
     server {

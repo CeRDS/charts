@@ -1,16 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "mytardis-web.fullname" . }}
+  name: {{ include "mytardis.fullname" . }}
   labels:
-    {{- include "mytardis-web.labels" . | nindent 4 }}
+    {{- include "mytardis.labels" . | nindent 4 }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
   selector:
     matchLabels:
-      {{- include "mytardis-web.selectorLabels" . | nindent 6 }}
+      {{- include "mytardis.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       annotations:
@@ -20,17 +20,18 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       labels:
-        {{- include "mytardis-web.selectorLabels" . | nindent 8 }}
+        {{- include "mytardis.selectorLabels" . | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "mytardis-web.serviceAccountName" . }}
+      serviceAccountName: {{ include "mytardis.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
         - name: {{ .Chart.Name }}
+          args: ['gunicorn','--log-level',{{ .Values.gunicorn.log_level | quote }}]
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -55,13 +56,13 @@ spec:
             - mountPath: {{ .Values.settings.default.receiving_dir.path | quote }}
               name: receive
             - mountPath: "/app/tardis/settings.py"
-              name: configmap
+              name: settings-py
               readOnly: true
               subPath: settings.py
             - mountPath: "/app/tardis/secrets"
               name: secrets
               readOnly: true
-            - mountPath: {{ .Values.settings.static_files_path | quote }}
+            - mountPath: {{ .Values.settings.static.files_path | quote }}
               name: static
               readOnly: true
 
@@ -108,10 +109,10 @@ spec:
               python3 manage.py createcachetable celery_lock_cache &&
               python3 manage.py collectstatic
           volumeMounts:
-            - mountPath: {{ .Values.settings.static_files_path | quote }}
+            - mountPath: {{ .Values.settings.static.files_path | quote }}
               name: static
             - mountPath: "/app/tardis/settings.py"
-              name: configmap
+              name: settings-py
               readOnly: true
               subPath: settings.py
             - mountPath: "/app/tardis/secrets"
@@ -132,24 +133,24 @@ spec:
       volumes:
         - name: "files-store"
           persistentVolumeClaim:
-            claimName: {{ include "mytardis-web.fullname" . }}-files-store
+            claimName: {{ include "mytardis.fullname" . }}-files-store
         - name: "receive"
           persistentVolumeClaim:
-            claimName: {{ include "mytardis-web.fullname" . }}-receive
-        - name: configmap
+            claimName: {{ include "mytardis.fullname" . }}-receive
+        - name: "settings-py"
           configMap:
-            name: {{ include "mytardis-web.fullname" . }}
+            name: {{ include "mytardis.fullname" . }}
             items:
               - key: "settings.py"
                 path: "settings.py"
         - name: secrets
           secret:
-            secretName: {{ include "mytardis-web.fullname" . }}
+            secretName: {{ include "mytardis.fullname" . }}
         - name: static
           emptyDir: {}
         - name: nginx-conf
           configMap:
-            name: {{ include "mytardis-web.fullname" . }}-nginx
+            name: {{ include "mytardis.fullname" . }}-nginx
             items:
               - key: "default.conf"
                 path: "default.conf"
