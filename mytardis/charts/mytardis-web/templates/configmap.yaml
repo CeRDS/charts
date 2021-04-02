@@ -12,30 +12,75 @@ data:
     from sentry_sdk.integrations.django import DjangoIntegration
     from .default_settings import *
 
-    DEBUG = {{ if .debug }} True {{ else }} False {{ end }}
-    STATIC_ROOT = {{ .static_files_path | quote }}
-    DEFAULT_STORAGE_BASE_DIR = {{ .default_store_path | quote }}
-    CHUNK_STORAGE = {{ .chunks_store_path | quote }}
-    METADATA_STORE_PATH = {{ .metadata_store_path | quote }}
-    EMAIL_HOST = {{ .email.host | quote }}
-    EMAIL_PORT = {{ .email.port | quote }}
-    DEFAULT_FROM_EMAIL = {{ .email.from | quote }}
-    SERVER_EMAIL = {{ .email.server | quote }}
     ADMINS = [
-    {{- range .admins }}
+      {{- range .admins }}
         ({{ .name | quote }}, {{ .email | quote }}),
-    {{- end }}
+      {{- end }}
     ]
-    MANAGERS = [
-    {{- range .managers }}
-        ({{ .name | quote }}, {{ .email | quote }}),
-    {{- end }}
+    ALLOWED_HOSTS = [
+      {{- range .allowed_hosts }}
+        {{ . | quote }},
+      {{- end }}
+        '{{ include "mytardis-web.fullname" $ }}-django.{{ $.Release.Namespace }}.svc.{{ $.Values.global.clusterDomain }}',
+        '{{ include "mytardis-web.fullname" $ }}-django',
+        ".localhost",
+        "127/8",
+        "[::1]",
     ]
+    CACHES = {
+      {{- range $alias,$opts := .caches }}
+        {{ $alias | quote }}: {
+            'BACKEND': {{ $opts.backend | quote }},
+            'LOCATION': {{ $opts.location | quote }},
+        },
+      {{- end }}
+    }
+    # CELERY = {} located in Secret
+    CHUNK_STORAGE = {{ .chunks_store_path | quote }}
+    # DATABASES = {} located in Secret
+    DEBUG = {{ if .debug }} True {{ else }} False {{ end }}
+    DEFAULT_FROM_EMAIL = {{ .default.from_email | quote }}
+    DEFAULT_INSTITUTION = {{ .default.institution | quote }}
+    FILE_STORE_PATH = {{ .file_store.path | quote }}
+    MYTARDIS_DEFAULT_RECEIVING_DIR = {{ .default.receiving_dir.path | quote }}
+
     INSTALLED_APPS += (
     {{- range .installed_apps }}
         {{ . | quote }}
     {{- end }}
     )
+
+    USE_X_FORWARDED_HOST = True
+
+    DEFAULT_STORAGE_BASE_DIR = {{ .default_store_path | quote }}
+    METADATA_STORE_PATH = {{ .metadata_store_path | quote }}
+
+    # Email settings
+    EMAIL_HOST = {{ .email.host | quote }}
+    EMAIL_PORT = {{ .email.port | quote }}
+    DEFAULT_FROM_EMAIL = {{ .email.from | quote }}
+    SERVER_EMAIL = {{ .email.server | quote }}
+    EMAIL_SUBJECT_PREFIX = {{ .email.subject_prefix | quote }}
+
+    MANAGERS = [
+      {{- range .managers }}
+        ({{ .name | quote }}, {{ .email | quote }}),
+      {{- end }}
+    ]
+
+    REQUIRE_DATAFILE_CHECKSUMS = {{ if .require.datafile.checksums }}True{{ else }}False{{ end }}
+    REQUIRE_DATAFILE_SIZES = {{ if .require.datafile.sizes }}True{{ else }}False{{ end }}
+    REQUIRE_VALIDATION_ON_INGESTION = {{ if .require.validation_on_ingestion }}True{{ else }}False{{ end }}
+    REQUIRE_VALID_PUBLIC_CONTACTS = {{ if .require.valid_public_contacts }}True{{ else }}False{{ end }}
+
+    SITE_ID = {{ .site.id | quote }}
+    SITE_TITLE = {{ .site.title | quote }}
+    
+    STATIC_ROOT = {{ .static.files_path | quote }}
+    STATIC_URL = {{ .static.url_path_prefix | quote }}
+
+    TIMEZONE = {{ .timezone | quote }}
+
     LOGGING = {
         'version': 1,
         'disable_existing_loggers': True,

@@ -3,11 +3,21 @@
 # Declare variables to be passed into your templates.
 
 global:
+  clusterDomain: "cluster.local"
   postgresql:
     postgresqlDatabase: "mytardis"
     postgresqlUsername: "mytardis"
     postgresqlPassword: "CHANGEME"
-    #servicePort: "5432"
+    #servicePort: 5432
+  rabbitmq:
+    #host: ""
+    password: &rabbitmqPwd "CHANGEME"
+    port: &rabbitmqPort 5672
+    user: &rabbitmqUser "mytardis"
+    vhost: &rabbitmqVhost "/"
+
+mytardis-celery:
+  enabled: true
 
 mytardis-web:
   enabled: true
@@ -19,4 +29,5 @@ postgresql:
 rabbitmq:
   enabled: false
   auth:
-    username: "mytardis"
+    password: *rabbitmqPwd
+    username: *rabbitmqUser

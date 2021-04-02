@@ -3,11 +3,104 @@
 # Declare variables to be passed into your templates.
 
 global:
-  postgresql:
-    postgresqlDatabase: ""
-    postgresqlUsername: ""
-    postgresqlPassword: ""
-    servicePort: ""
+  clusterDomain: "cluster.local"
+  postgresql: {}
+  rabbitmq: {}
+  #storageClassName: ""
+
+django:
+  service:
+    type: ClusterIP
+    port: 8000
+
+settings:
+  # Kubernetes internal service names added automatically to the allowed_hosts setting
+  allowed_hosts: []
+  #  - "CHANGEME.example.local"
+  caches:
+    default:
+      backend: 'django.core.cache.backends.db.DatabaseCache'
+      location: 'default_cache'
+    celery-locks:
+      backend: 'django.core.cache.backends.db.DatabaseCache'
+      location: 'celery_lock_cache'
+  debug: false
+  default:
+    from_email: "CHANGEME@example.local"
+    institution: "The University of Western Australia"
+    receiving_dir:
+      capacity: 1Gi
+      path: "/vol/staging"
+      #storageclassName: ""
+  email:
+    host: "localhost"
+    port: 25
+    from: "mytardis@CHANGEME.local"
+    subject_prefix: "[MyTardis]:"
+  file_store:
+    capacity: 1Gi
+    path: "/vol/store"
+    #storageClassName: ""
+  require:
+    datafile:
+      checksums: true
+      sizes: true
+    validation_on_ingestion: true
+    valid_public_contacts: true
+  secret_key: "auhvfqbfabdsuivbaiupsdhvuiashukfda"
+  site:
+    id: 1
+    title: "MyTardis"
+  timezone: "UTC"
+  postgres:
+    conn_max_age: "None"
+  rabbitmq:
+    host: ""
+    port: ""
+    user: ""
+    password: ""
+    vhost: ""
+  static:
+    files_path: "/app/static"
+    url_path_prefix: "/static/"
+  default_store_path: ""
+  chunks_store_path: ""
+  metadata_store_path: ""
+  admins:
+    - name: admin
+      email: admin@example.local
+  managers:
+    - name: manager
+      email: manager@example.local
+  installed_apps: []
+  ldap: {}
+  #  tls: true
+  #  url: "ldap.example.local"
+  #  user_login_attr: "sAMAccountName"
+  #  user_attr_map:
+  #    key1: "value"
+  #    key2: "value"
+  #  group_id_attr: "primaryGroupID"
+  #  group_attr_map:
+  #    key1: "value"
+  #    key2: "value"
+  #  admin_user: "admin"
+  #  admin_password: "password"
+  #  base: ""
+  #  user_base: ""
+  #  group_base: ""
+  celerybeat_schedule: {}
+  #  name1:
+  #    task: ""
+  #    schedule: ""
+  #    kwargs: ""
+  configMaps: []
+
+static:
+  host: "localhost"
+  service:
+    type: ClusterIP
+    port: 8080
 
 replicaCount: 1
 
@@ -43,16 +136,16 @@ securityContext:
   runAsNonRoot: true
   runAsUser: 1001
 
-django:
-  service:
-    type: ClusterIP
-    port: 8000
-
 ingress:
   enabled: false
   annotations: {}
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
+    # nginx.ingress.kubernetes.io/proxy-body-size: "4G"
+    # nginx.ingress.kubernetes.io/proxy-buffer-size: "8192k"
+    # nginx.ingress.kubernetes.io/proxy-connect-timeout: "2000"
+    # nginx.ingress.kubernetes.io/proxy-send-timeout: "2000"
+    # nginx.ingress.kubernetes.io/proxy-read-timeout: "2000"
   hosts:
     - host: chart-example.local
       paths:
@@ -89,59 +182,3 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
-
-settings:
-  debug: false
-  secret_key: "auhvfqbfabdsuivbaiupsdhvuiashukfda"
-  postgres:
-    conn_max_age: "None"
-  rabbitmq:
-    host: ""
-    port: ""
-    user: ""
-    password: ""
-    vhost: ""
-  static_files_path: "/app/static"
-  default_store_path: ""
-  chunks_store_path: ""
-  metadata_store_path: ""
-  email:
-    host: ""
-    port: ""
-    from: ""
-    server: ""
-  admins:
-    - name: admin
-      email: admin@example.local
-  managers:
-    - name: manager
-      email: manager@example.local
-  installed_apps: []
-  ldap: {}
-  #  tls: true
-  #  url: "ldap.example.local"
-  #  user_login_attr: "sAMAccountName"
-  #  user_attr_map:
-  #    key1: "value"
-  #    key2: "value"
-  #  group_id_attr: "primaryGroupID"
-  #  group_attr_map:
-  #    key1: "value"
-  #    key2: "value"
-  #  admin_user: "admin"
-  #  admin_password: "password"
-  #  base: ""
-  #  user_base: ""
-  #  group_base: ""
-  celerybeat_schedule: {}
-  #  name1:
-  #    task: ""
-  #    schedule: ""
-  #    kwargs: ""
-  configMaps: []
-
-static:
-  host: "localhost"
-  service:
-    type: ClusterIP
-    port: 8080

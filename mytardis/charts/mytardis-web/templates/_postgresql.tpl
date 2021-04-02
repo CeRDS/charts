@@ -23,21 +23,5 @@ None
 {{- end }}
 
 {{- define "mytardis-web.rabbitmq.host" -}}
-mytardis-rabbitmq
-{{- end }}
-
-{{- define "mytardis-web.rabbitmq.port" -}}
-6666
-{{- end }}
-
-{{- define "mytardis-web.rabbitmq.user" -}}
-USER
-{{- end }}
-
-{{- define "mytardis-web.rabbitmq.password" -}}
-PASSWORD
-{{- end }}
-
-{{- define "mytardis-web.rabbitmq.vhost" -}}
-VHOST
+{{ default .Values.global.rabbitmq.host (printf "%s-%s" .Release.Name "rabbitmq") }}
 {{- end }}

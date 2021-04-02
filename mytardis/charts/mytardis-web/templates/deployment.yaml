@@ -50,6 +50,10 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
+            - mountPath: {{ .Values.settings.file_store.path | quote }}
+              name: files-store
+            - mountPath: {{ .Values.settings.default.receiving_dir.path | quote }}
+              name: receive
             - mountPath: "/app/tardis/settings.py"
               name: configmap
               readOnly: true
@@ -100,6 +104,8 @@ spec:
           args:
             -
               python3 manage.py migrate &&
+              python3 manage.py createcachetable default_cache &&
+              python3 manage.py createcachetable celery_lock_cache &&
               python3 manage.py collectstatic
           volumeMounts:
             - mountPath: {{ .Values.settings.static_files_path | quote }}
@@ -124,6 +130,12 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       volumes:
+        - name: "files-store"
+          persistentVolumeClaim:
+            claimName: {{ include "mytardis-web.fullname" . }}-files-store
+        - name: "receive"
+          persistentVolumeClaim:
+            claimName: {{ include "mytardis-web.fullname" . }}-receive
         - name: configmap
           configMap:
             name: {{ include "mytardis-web.fullname" . }}
@@ -145,5 +157,3 @@ spec:
           emptyDir: {}
         - name: nginx-run
           emptyDir: {}
-
-
