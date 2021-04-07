@@ -7,6 +7,7 @@ metadata:
 data:
   {{- with .Values.settings }}
   settings.py: |
+    import sys
     from datetime import timedelta
     import sentry_sdk
     from sentry_sdk.integrations.django import DjangoIntegration
@@ -44,9 +45,42 @@ data:
     FILE_STORE_PATH = {{ .file_store.path | quote }}
     MYTARDIS_DEFAULT_RECEIVING_DIR = {{ .default.receiving_dir.path | quote }}
 
+    LOGGING = {
+        'disable_existing_loggers': False,
+        'handlers': {
+            'stdout': {
+                'class': 'logging.StreamHandler',
+                'level': 'DEBUG',
+                'stream': 'ext://sys.stdout',
+            },
+            'stderr': {
+                'class': 'logging.StreamHandler',
+                'level': 'INFO',
+                'stream': 'ext://sys.stderr',
+            },
+        },
+        'loggers': {
+            'django': {
+                'handlers': ['stdout'],
+                'level': {{ $.Values.django.log_level | quote }},
+            },
+            __name__: {
+                'handlers': ['stdout'],
+                'propagate': False,
+                'level': {{ .logging.system_log_level | quote }},
+            },
+            'tardis': {
+                'handlers': ['stdout'],
+                'propagate': False,
+                'level': {{ .logging.module_log_level | quote }},
+            },
+        },
+        'version': 1,
+    }
+
     INSTALLED_APPS += (
     {{- range .installed_apps }}
-        {{ . | quote }}
+        {{ . | quote }},
     {{- end }}
     )
 
@@ -79,25 +113,8 @@ data:
     STATIC_ROOT = {{ .static.files_path | quote }}
     STATIC_URL = {{ .static.url_path_prefix | quote }}
 
-    TIMEZONE = {{ .timezone | quote }}
+    TIME_ZONE = {{ .timezone | quote }}
 
-    LOGGING = {
-        'version': 1,
-        'disable_existing_loggers': False,
-        'loggers': {
-            '': {
-                'level': 'DEBUG',
-                'propogate': True,
-                'handlers': ['console']
-            }
-        },
-        'handlers': {
-            'console': {
-                'class': 'logging.StreamHandler',
-                'stream': 'ext://sys.stdout'
-            }
-        }
-    }
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_ORIGINAL_PROTO', 'https')
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True

@@ -1,0 +1,19 @@
+{{- range $volno,$vol := .Values.volumes -}}
+{{- if not .persistentVolumeClaim -}}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ printf "%s-%s" (include "sshd.fullname" $) $volno }}
+  labels:
+    {{- include "sshd.labels" $ | nindent 4 }}
+spec:
+  accessModes: [ "ReadWriteMany" ]
+  resources:
+    requests:
+      storage: {{ .capacity | quote }}
+  {{- if (or .storageClassName $.Values.global.storageClassName) }}
+  storageClassName: {{ .storageClassName | default $.Values.global.storageClassName | quote }}
+  {{- end }}
+{{- end -}}
+{{- end -}}

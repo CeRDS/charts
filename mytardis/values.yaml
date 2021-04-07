@@ -35,6 +35,7 @@ celery:
   worker:
     autoscaling:
       enabled: false
+    loglevel: "WARNING"
     podAnnotations: {}
     replicaCount: 1
     result:
@@ -43,6 +44,7 @@ celery:
     resources: {}
 
 django:
+  log_level: "WARNING"
   service:
     type: ClusterIP
     port: 8000
@@ -71,7 +73,7 @@ settings:
     receiving_dir:
       capacity: 1Gi
       path: "/vol/staging"
-      #storageclassName: ""
+      #storageClassName: ""
   email:
     host: "localhost"
     port: 25
@@ -81,6 +83,14 @@ settings:
     capacity: 1Gi
     path: "/vol/store"
     #storageClassName: ""
+  installed_apps: []
+  # - "tardis.apps.mydata"
+  # - "tardis.apps.push_to"
+  logging:
+    # DEBUG|INFO|WARNING|ERROR|CRITICAL
+    #log_level: "WARNING"
+    module_log_level: "WARNING"
+    system_log_level: "WARNING"
   require:
     datafile:
       checksums: true
@@ -118,7 +128,6 @@ settings:
   managers:
     - name: manager
       email: manager@example.local
-  installed_apps: []
   ldap: {}
   #  tls: true
   #  url: "ldap.example.local"
@@ -141,6 +150,9 @@ settings:
   #    schedule: ""
   #    kwargs: ""
   configMaps: []
+
+sshd:
+  enabled: false
 
 static:
   host: "localhost"
@@ -208,9 +220,9 @@ ingress:
     - host: chart-example.local
       paths:
         - path: "/"
-          backend_service_name: "django"
+          backend_service_name: "django-headless"
         - path: "/static/"
-          backend_service_name: "static"
+          backend_service_name: "static-headless"
   tls: []
   #  - secretName: chart-example-tls
   #    hosts:
