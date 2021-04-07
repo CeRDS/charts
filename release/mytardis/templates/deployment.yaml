@@ -1,0 +1,160 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "mytardis.fullname" . }}
+  labels:
+    {{- include "mytardis.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "mytardis.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum | quote }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum | quote }}
+        {{- with .Values.podAnnotations }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "mytardis.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "mytardis.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          args: ['gunicorn','--log-level',{{ .Values.gunicorn.log_level | quote }}]
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: django
+              containerPort: 8000
+              protocol: TCP
+          #livenessProbe:
+          #  httpGet:
+          #    path: /login
+          #    port: http
+          #readinessProbe:
+          #  httpGet:
+          #    path: /login
+          #    port: http
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - mountPath: {{ .Values.settings.file_store.path | quote }}
+              name: files-store
+            - mountPath: {{ .Values.settings.default.receiving_dir.path | quote }}
+              name: receive
+            - mountPath: "/app/tardis/settings.py"
+              name: settings-py
+              readOnly: true
+              subPath: settings.py
+            - mountPath: "/app/tardis/secrets"
+              name: secrets
+              readOnly: true
+            - mountPath: {{ .Values.settings.static.files_path | quote }}
+              name: static
+              readOnly: true
+
+        - name: {{ .Chart.Name }}-nginx
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: nginx:1.19-alpine
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          #livenessProbe:
+          #  httpGet:
+          #    path: /
+          #    port: http
+          #readinessProbe:
+          #  httpGet:
+          #    path: /
+          #    port: http
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - mountPath: "/etc/nginx/conf.d/default.conf"
+              name: nginx-conf
+              readOnly: true
+              subPath: default.conf
+            - mountPath: /usr/share/nginx/html/static/
+              name: static
+              readOnly: true
+            - mountPath: /var/cache/nginx
+              name: nginx-cache
+            - mountPath: /var/run
+              name: nginx-run
+
+      initContainers:
+        - name: {{ .Chart.Name }}-migrations
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: [ "/bin/sh", "-c" ]
+          args:
+            -
+              python3 manage.py migrate &&
+              python3 manage.py createcachetable default_cache &&
+              python3 manage.py createcachetable celery_lock_cache &&
+              python3 manage.py collectstatic
+          volumeMounts:
+            - mountPath: {{ .Values.settings.static.files_path | quote }}
+              name: static
+            - mountPath: "/app/tardis/settings.py"
+              name: settings-py
+              readOnly: true
+              subPath: settings.py
+            - mountPath: "/app/tardis/secrets"
+              name: secrets
+              readOnly: true
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: "files-store"
+          persistentVolumeClaim:
+            claimName: {{ include "mytardis.fullname" . }}-files-store
+        - name: "receive"
+          persistentVolumeClaim:
+            claimName: {{ include "mytardis.fullname" . }}-receive
+        - name: "settings-py"
+          configMap:
+            name: {{ include "mytardis.fullname" . }}
+            items:
+              - key: "settings.py"
+                path: "settings.py"
+        - name: secrets
+          secret:
+            secretName: {{ include "mytardis.fullname" . }}
+        - name: static
+          emptyDir: {}
+        - name: nginx-conf
+          configMap:
+            name: {{ include "mytardis.fullname" . }}-nginx
+            items:
+              - key: "default.conf"
+                path: "default.conf"
+        - name: nginx-cache
+          emptyDir: {}
+        - name: nginx-run
+          emptyDir: {}

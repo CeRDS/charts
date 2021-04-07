@@ -1,0 +1,107 @@
+---
+global:
+  timezone: &timezone "Australia/Perth"
+
+celery:
+  beat:
+    loglevel: "DEBUG"
+  worker:
+    loglevel: "info"
+gunicorn:
+  log_level: 'warning'
+
+settings:
+  admins:
+    - name: "Dean Taylor"
+      email: "dean.taylor@uwa.edu.au"
+  allowed_hosts:
+    - "trudat-dev.cmca.uwa.edu.au"
+    - "trudat-dev.cerds.org.au"
+  debug: false
+  default:
+    from_email: "do-not-reply@cerds.org.au"
+    institution: "The University of Western Australia"
+    receiving_dir:
+      storageClassName: "nfsv4"
+  email:
+    subject_prefix: "[TruDat@UWA]:"
+  file_store:
+    storageClassName: "nfsv4"
+  installed_apps:
+    - "tardis.apps.mydata"
+    - "tardis.apps.push_to"
+  logging:
+    #log_level: "INFO"
+    module_log_level: "INFO"
+    system_log_level: "INFO"
+  managers:
+    - name: "Dean Taylor"
+      email: "dean.taylor@uwa.edu.au"
+  postgresql:
+    postgresqlPassword: &postgresqlPwd "mytardis"
+  rabbitmq:
+    password: &rabbitmqPwd "jajkdhflkadshlkfj"
+  secret_key: "SECRET_KEY_OVERRIDE"
+  site:
+    title: "TruDat@UWA"
+  timezone: *timezone
+
+postgresql:
+  enabled: true
+  postgresqlPassword: *postgresqlPwd
+
+rabbitmq:
+  enabled: true
+  auth:
+    erlangCookie: "luadhflsaduhflukuawsflk"
+    password: *rabbitmqPwd
+
+sshd:
+  enabled: true
+  debug: false
+  image:
+    pullPolicy: Always
+  service:
+    type: "NodePort"
+  users:
+    mydata:
+      uid: 1001
+      home: /home/mydata
+      authorized_keys:
+        - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDEft4lgAQwIAt1bjKmQhhHyGzeTT4HLs3r0iP9P5C7dcZ73XKAG2N7Iakmpyv8IwD6nTS1ytDagWHDN08nPxXN1nSaEh/SAeBaP7nckv++KRbVyAHyC7JwyDDaJw8NOZ/+u8USGLx3frIs2X1Z4YhnccPKpbINax9QHmV2+dcsjE+tVZ4RUxEW8zH/oGurLBxMDXmJ20Ln+P9/FxQpm3FLRnNZ3P41gc+Pp/Akqb7bLJp04Cgm6UOSEmSuvqwohmbsjX5B/KGn4guxcchSlAxKSxWZsaEfg3dGqh7Mv8WULHd+Ex4NVwHrngcgsP80YDCsl/hI1I29DscKxZ5liEfV5WHjtcxWPpQgz53qGhP0L1i7DnwlIOPWbSSwLV9dj6W5ugW6WvB9wDZF548FB8AReQ5dgmmsmC5cljpNKjlx6QR5VNalCBYDaAFH2bXu5huhVf8a8s2+lbCoEvQT4ilqbTTdAsr/RtEwa/k2bqw7S1B5l/F+Gj1VWN3ygOiNIcU= Dean.Taylor@dmav001.cmca.uwa.edu.au
+  hostKeysSecret: "ssh-host-keys"
+  volumes:
+    - mountPath: "/home/mydata"
+      persistentVolumeClaim: "mytardis-receive"
+
+image:
+  pullPolicy: Always
+  tag: "1d93176-rc"
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    kubernetes.io/tls-acme: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "4G"
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "8192k"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "2000"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "2000"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "2000"
+  hosts:
+    - host: "trudat-dev.cmca.uwa.edu.au"
+      paths: 
+        - path: "/"
+          backend_service_name: "django"
+        - path: "/static/"
+          backend_service_name: "static"
+    - host: "trudat-dev.cerds.org.au"
+      paths:
+        - path: "/"
+          backend_service_name: "django"
+        - path: "/static/"
+          backend_service_name: "static"
+  tls:
+    - hosts:
+        - "trudat-dev.cmca.uwa.edu.au"
+        - "trudat-dev.cerds.org.au"
+      secretName: "trudat.cerds001.cmca.uwa.edu.au-tls"

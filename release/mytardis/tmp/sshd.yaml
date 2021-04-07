@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: sshd-test
+  namespace: default
+spec:
+  containers:
+    - name: sshd-test
+      image: cerds/sshd:python-3.9-slim-buster
+      imagePullPolicy: Always
+      args: ['tail','-f','/dev/null']
+  restartPolicy: OnFailure
