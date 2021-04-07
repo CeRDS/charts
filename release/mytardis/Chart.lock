@@ -1,5 +1,5 @@
 dependencies:
-- name: mytardis-web
+- name: sshd
   repository: ""
   version: '>=0.1.0'
 - name: postgresql
@@ -8,5 +8,5 @@ dependencies:
 - name: rabbitmq
   repository: https://charts.bitnami.com/bitnami
   version: 8.11.3
-digest: sha256:fe16663c7ad30d70030839eda395183fc8de500711171206d5cb4edfedad0fb8
-generated: "2021-03-26T07:36:44.948087422+08:00"
+digest: sha256:52028193cb848194d5b06a6e1eb325d0b127db8b70f4994c965adb7c441ec334
+generated: "2021-04-07T10:03:54.296057629+08:00"
