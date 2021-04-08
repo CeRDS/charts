@@ -56,6 +56,18 @@ gunicorn:
   extra_args: ""
 
 settings:
+  # Authentication
+  auth: {}
+  #  aaf:
+  #    key: "Get this from AAF"
+  #    secret: "Get this from AAF"
+  #    authUrl: "Get this from AAF"
+  #    tokenUrl: "Get this from AAF"
+  #    userInfoUrl: "Get this from AAF"
+  #  google:
+  #    key: "Get this from Google"
+  #    secret: "Get this from Google"
+
   # Kubernetes internal service names added automatically to the allowed_hosts setting
   allowed_hosts: []
   #  - "CHANGEME.example.local"
@@ -83,6 +95,7 @@ settings:
     capacity: 1Gi
     path: "/vol/store"
     #storageClassName: ""
+  initialLocations: {}
   installed_apps: []
   # - "tardis.apps.mydata"
   # - "tardis.apps.push_to"
@@ -91,6 +104,8 @@ settings:
     #log_level: "WARNING"
     module_log_level: "WARNING"
     system_log_level: "WARNING"
+  raw_python: []
+  registrationOpen: false
   require:
     datafile:
       checksums: true
@@ -102,6 +117,10 @@ settings:
     id: 1
     title: "MyTardis"
   timezone: "UTC"
+  user:
+    initialGroups: []
+
+
   postgresql:
     conn_max_age: "None"
     # NB: Sync with .postgresql settings

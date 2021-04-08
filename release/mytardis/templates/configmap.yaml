@@ -9,6 +9,7 @@ data:
   settings.py: |
     import sys
     from datetime import timedelta
+    from kombu import Exchange, Queue
     import sentry_sdk
     from sentry_sdk.integrations.django import DjangoIntegration
     from .default_settings import *
@@ -28,6 +29,76 @@ data:
         "127/8",
         "[::1]",
     ]
+
+    {{- if or .auth.aaf .auth.google }}
+    # Authentication
+    # https://mytardis.readthedocs.io/en/develop/apps/social_auth.html
+    # https://python-social-auth.readthedocs.io/en/latest/
+    {{- if .auth.aaf }}
+    AUTHENTICATION_BACKENDS += (
+        'social_core.backends.open_id.OpenIdAuth',
+        'tardis.apps.social_auth.auth.authorisation.AAFOpenId',
+    )
+    AUTH_PROVIDERS += (
+        ('AAF','AAF','tardis.apps.social_auth.auth.authorisation.AAFOpenId'),
+    )
+    SOCIAL_AUTH_AAF_PIPELINE = (
+        'social_core.pipeline.social_auth.social_details',
+        'social_core.pipeline.social_auth.social_uid',
+        'social_core.pipeline.social_auth.social_user',
+        'social_core.pipeline.user.get_username',
+        'social_core.pipeline.user.create_user',
+        'tardis.apps.social_auth.auth.social_auth.configure_social_auth_user',
+        'tardis.apps.social_auth.auth.social_auth.add_authentication_method',
+        'tardis.apps.social_auth.auth.social_auth.approve_user_auth',
+        'tardis.apps.social_auth.auth.social_auth.add_user_permissions',
+        'social_core.pipeline.social_auth.associate_user',
+        'social_core.pipeline.social_auth.load_extra_data',
+        'social_core.pipeline.user.user_details',
+    )
+    {{- end }}
+    {{- if .auth.google }}
+    AUTHENTICATION_BACKENDS += (
+        'social_core.backends.google.GoogleOpenId',
+        'social_core.backends.google.GoogleOAuth2',
+    )
+    AUTH_PROVIDERS += (
+        ('Google','Google','social_core.backends.google.GoogleOAuth2'),
+    )
+    SOCIAL_AUTH_GOOGLE_OAUTH2_PIPELINE = (
+        'social_core.pipeline.social_auth.social_details',
+        'social_core.pipeline.social_auth.social_uid',
+        'social_core.pipeline.social_auth.social_user',
+        'social_core.pipeline.user.get_username',
+        'social_core.pipeline.user.create_user',
+        'tardis.apps.social_auth.auth.social_auth.configure_social_auth_user',
+        'tardis.apps.social_auth.auth.social_auth.add_authentication_method',
+        'social_core.pipeline.social_auth.associate_user',
+        'social_core.pipeline.social_auth.load_extra_data',
+        'social_core.pipeline.user.user_details',
+        'tardis.apps.social_auth.auth.social_auth.send_admin_email',
+    )
+    {{- end }}
+    INSTALLED_APPS += (
+        'social_django',
+        'tardis.apps.social_auth',
+        'mytardis_openid_login',
+    )
+    LOGIN_VIEWS = {
+        1: 'mytardis_openid_login.views.LoginView',
+    }
+    MIDDLEWARE += (
+        'social_django.middleware.SocialAuthExceptionMiddleware',
+    )
+    SOCIAL_AUTH_URL_NAMESPACE_BEGIN = 'social:begin',
+    TEMPLATES[0]['OPTIONS']['context_processors'].extend(
+        [
+            'social_django.context_processors.backends',
+            'social_django.context_processors.login_redirect',
+        ]
+    )
+    {{- end }}
+
     CACHES = {
       {{- range $alias,$opts := .caches }}
         {{ $alias | quote }}: {
@@ -42,8 +113,21 @@ data:
     DEBUG = {{ if .debug }}True{{ else }}False{{ end }}
     DEFAULT_FROM_EMAIL = {{ .default.from_email | quote }}
     DEFAULT_INSTITUTION = {{ .default.institution | quote }}
+    DEFAULT_STORAGE_BASE_DIR = {{ .default_store_path | quote }}
+
+    # Email settings
+    EMAIL_HOST = {{ .email.host | quote }}
+    EMAIL_PORT = {{ .email.port | quote }}
+    DEFAULT_FROM_EMAIL = {{ .email.from | quote }}
+    SERVER_EMAIL = {{ .email.host | quote }}
+    EMAIL_SUBJECT_PREFIX = {{ .email.subject_prefix | quote }}
+
     FILE_STORE_PATH = {{ .file_store.path | quote }}
-    MYTARDIS_DEFAULT_RECEIVING_DIR = {{ .default.receiving_dir.path | quote }}
+    INSTALLED_APPS += (
+      {{- range .installed_apps }}
+        {{ . | quote }},
+      {{- end }}
+    )
 
     LOGGING = {
         'disable_existing_loggers': False,
@@ -78,48 +162,45 @@ data:
         'version': 1,
     }
 
-    INSTALLED_APPS += (
-    {{- range .installed_apps }}
-        {{ . | quote }},
-    {{- end }}
-    )
-
-    USE_X_FORWARDED_HOST = True
-
-    DEFAULT_STORAGE_BASE_DIR = {{ .default_store_path | quote }}
-    METADATA_STORE_PATH = {{ .metadata_store_path | quote }}
-
-    # Email settings
-    EMAIL_HOST = {{ .email.host | quote }}
-    EMAIL_PORT = {{ .email.port | quote }}
-    DEFAULT_FROM_EMAIL = {{ .email.from | quote }}
-    SERVER_EMAIL = {{ .email.host | quote }}
-    EMAIL_SUBJECT_PREFIX = {{ .email.subject_prefix | quote }}
-
     MANAGERS = [
       {{- range .managers }}
         ({{ .name | quote }}, {{ .email | quote }}),
       {{- end }}
     ]
+    METADATA_STORE_PATH = {{ .metadata_store_path | quote }}
+    MYTARDIS_DEFAULT_RECEIVING_DIR = {{ .default.receiving_dir.path | quote }}
+    NEW_USER_INITIAL_GROUPS = [
+      {{- range .user.initialGroups }}
+        {{ . | quote }},
+      {{- end }}
+    ]
+    REGISTRATION_OPEN = {{ if .registrationOpen }}True{{ else }}False{{ end }}
 
     REQUIRE_DATAFILE_CHECKSUMS = {{ if .require.datafile.checksums }}True{{ else }}False{{ end }}
     REQUIRE_DATAFILE_SIZES = {{ if .require.datafile.sizes }}True{{ else }}False{{ end }}
     REQUIRE_VALIDATION_ON_INGESTION = {{ if .require.validation_on_ingestion }}True{{ else }}False{{ end }}
     REQUIRE_VALID_PUBLIC_CONTACTS = {{ if .require.valid_public_contacts }}True{{ else }}False{{ end }}
 
+    # Site details
     SITE_ID = {{ .site.id | quote }}
     SITE_TITLE = {{ .site.title | quote }}
-    
+
     STATIC_ROOT = {{ .static.files_path | quote }}
     STATIC_URL = {{ .static.url_path_prefix | quote }}
 
     TIME_ZONE = {{ .timezone | quote }}
 
+    USE_X_FORWARDED_HOST = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_ORIGINAL_PROTO', 'https')
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+
+
+
     DEFAULT_ARCHIVE_FORMATS = ['tar']
     REDIS_VERIFY_MANAGER = False
+
+    # SFTP settings ?
     {{- if .sftp }}
     {{- with .sftp }}
     # SFTP settings
@@ -129,23 +210,10 @@ data:
     SFTP_USERNAME_ATTRIBUTE = {{ .username_attribute | quote }}
     {{- end }}
     {{- end }}
-    {{- if .auth_providers }}
-    AUTH_PROVIDERS = (
-      {{- range .auth_providers }}
-        {{ . | quote }},
-      {{- end }}
-    )
-    {{- end }}
+
     {{- if .group_providers }}
     GROUP_PROVIDERS = (
       {{- range .group_providers }}
-        {{ . | quote }},
-      {{- end }}
-    )
-    {{- end }}
-    {{- if .authentication_backends }}
-    AUTHENTICATION_BACKENDS = (
-      {{- range .authentication_backends }}
         {{ . | quote }},
       {{- end }}
     )
@@ -165,16 +233,20 @@ data:
     #    LOGIN_VIEWS_FROM_YAML = data.get('login_views')
     #    LOGIN_VIEWS = { int(key): LOGIN_VIEWS_FROM_YAML[key] for key in LOGIN_VIEWS_FROM_YAML.keys() }
     {{- end }}
+  {{- end }}
 
-    CELERY_RESULT_BACKEND = {{ $.Values.celery.worker.result.backend | quote }}
+  {{- with .Values.celery }}
+    # Celery configuration
+    CELERY_RESULT_BACKEND = {{ .worker.result.backend | quote }}
     CELERY_QUEUES += (
         Queue('filters', Exchange('filters'),
               routing_key='filters',
               queue_arguments={'x-max-priority': MAX_TASK_PRIORITY}),
     )
-    {{- if $.Values.celery.beat.schedule }}
+  {{- end }}
+  {{- with .Values.celery.beat }}
     CELERYBEAT_SCHEDULE = {
-      {{- range $name,$params := $.Values.celery.beat.schedule }}
+      {{- range $name,$params := .schedule }}
         {{ $name | quote }}: {
             'task': {{ $params.task | quote }},
             'schedule': {{ $params.schedule }},
@@ -192,11 +264,9 @@ data:
         }
       {{- end }}
     }
-    {{- end }}
-
-    from .secrets import *
   {{- end }}
 
+    from .secrets import *
 ---
 apiVersion: v1
 kind: ConfigMap

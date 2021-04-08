@@ -31,7 +31,7 @@ spec:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
         - name: {{ .Chart.Name }}-celery-beat
-          args: ['celery','beat','-l',{{ .Values.celery.beat.loglevel | quote }}]
+          args: ['celery','beat','-l',{{ .Values.celery.beat.loglevel | upper | quote }}]
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"

@@ -1,3 +1,4 @@
 .*.swp
 **/tmp/
 **/charts/*.tgz
+Chart.lock
