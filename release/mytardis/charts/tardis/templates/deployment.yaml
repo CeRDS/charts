@@ -1,16 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "mytardis.fullname" . }}
+  name: {{ include "tardis.fullname" . }}
   labels:
-    {{- include "mytardis.labels" . | nindent 4 }}
+    {{- include "tardis.labels" . | nindent 4 }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
   selector:
     matchLabels:
-      {{- include "mytardis.selectorLabels" . | nindent 6 }}
+      {{- include "tardis.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       annotations:
@@ -20,13 +20,13 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       labels:
-        {{- include "mytardis.selectorLabels" . | nindent 8 }}
+        {{- include "tardis.selectorLabels" . | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "mytardis.serviceAccountName" . }}
+      serviceAccountName: {{ include "tardis.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
@@ -118,6 +118,7 @@ spec:
             - mountPath: "/app/tardis/secrets"
               name: secrets
               readOnly: true
+
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -133,24 +134,24 @@ spec:
       volumes:
         - name: "files-store"
           persistentVolumeClaim:
-            claimName: {{ include "mytardis.fullname" . }}-files-store
+            claimName: {{ include "tardis.fullname" . }}-files-store
         - name: "receive"
           persistentVolumeClaim:
-            claimName: {{ include "mytardis.fullname" . }}-receive
+            claimName: {{ include "tardis.fullname" . }}-receive
         - name: "settings-py"
           configMap:
-            name: {{ include "mytardis.fullname" . }}
+            name: {{ include "tardis.fullname" . }}
             items:
               - key: "settings.py"
                 path: "settings.py"
         - name: secrets
           secret:
-            secretName: {{ include "mytardis.fullname" . }}
+            secretName: {{ include "tardis.fullname" . }}
         - name: static
           emptyDir: {}
         - name: nginx-conf
           configMap:
-            name: {{ include "mytardis.fullname" . }}-nginx
+            name: {{ include "tardis.fullname" . }}-nginx
             items:
               - key: "default.conf"
                 path: "default.conf"
