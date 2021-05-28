@@ -23,8 +23,8 @@ data:
       {{- range .allowed_hosts }}
         {{ . | quote }},
       {{- end }}
-        '{{ include "mytardis.fullname" $ }}-django.{{ $.Release.Namespace }}.svc.{{ $.Values.global.clusterDomain }}',
-        '{{ include "mytardis.fullname" $ }}-django',
+        '{{ include "tardis.fullname" $ }}-django.{{ $.Release.Namespace }}.svc.{{ $.Values.global.clusterDomain }}',
+        '{{ include "tardis.fullname" $ }}-django',
         ".localhost",
         "127/8",
         "[::1]",

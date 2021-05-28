@@ -2,16 +2,16 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-global: {}
-  #clusterDomain: "cluster.local"
-  #postgresql:
-  #  postgresqlDatabase: "mytardis"
-  #  postgresqlUsername: "mytardis"
-  #  #postgresqlPassword: ""
-  #  #servicePort: 5432
+global:
+  clusterDomain: "cluster.local"
+  postgresql:
+    postgresqlDatabase: "mytardis"
+    postgresqlUsername: "mytardis"
+    #postgresqlPassword: ""
+    #servicePort: 5432
   #rabbitmq:
   #  #host: ""
-  #  #password: &rabbitmqPwd "CHANGEME"
+  #  #password: "CHANGEME"
   #  port: &rabbitmqPort 5672
   #  user: &rabbitmqUser "mytardis"
   #  vhost: &rabbitmqVhost "/"
@@ -126,12 +126,12 @@ settings:
     # NB: Sync with .postgresql settings
     #postgresqlDatabase: "mytardis"
     #postgresqlUsername: "mytardis"
-    postgresqlPassword: &postgresqlPwd "CHANGEME"
+    #postgresqlPassword: "CHANGEME"
     #servicePort: 5432
-  rabbitmq:
+  rabbitmq: {}
     #host: ""
     # NB: Sync with .rabbitmq.auth.password
-    password: &rabbitmqPwd "CHANGEME"
+    #password: "CHANGEME"
     #port: ""
     #user: ""
     #vhost: ""
@@ -170,26 +170,11 @@ settings:
   #    kwargs: ""
   configMaps: []
 
-sshd:
-  enabled: false
-
 static:
   host: "localhost"
   service:
     type: ClusterIP
     port: 8080
-
-postgresql:
-  enabled: false
-  # NB: Sync with .settings.postgresql settings!
-  postgresqlPassword: *postgresqlPwd
-
-rabbitmq:
-  enabled: false
-  auth:
-    # NB: Sync with .settings.rabbitmq.password
-    password: *rabbitmqPwd
-    username: *rabbitmqUser
 
 replicaCount: 1
 
