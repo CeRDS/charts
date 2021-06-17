@@ -41,9 +41,9 @@ spec:
   type: {{ .Values.static.service.type }}
   ports:
     - port: {{ .Values.static.service.port }}
-      targetPort: http
+      targetPort: static
       protocol: TCP
-      name: http
+      name: static
   selector:
     {{- include "tardis.selectorLabels" . | nindent 4 }}
 ---
@@ -58,8 +58,8 @@ spec:
   clusterIP: None
   ports:
     - port: {{ .Values.static.service.port }}
-      targetPort: http
+      targetPort: static
       protocol: TCP
-      name: http
+      name: static
   selector:
     {{- include "tardis.selectorLabels" . | nindent 4 }}

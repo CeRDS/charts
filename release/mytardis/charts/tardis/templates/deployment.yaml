@@ -21,6 +21,7 @@ spec:
         {{- end }}
       labels:
         {{- include "tardis.selectorLabels" . | nindent 8 }}
+        accs/component: web
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -71,7 +72,7 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: nginx:1.19-alpine
           ports:
-            - name: http
+            - name: static
               containerPort: 8080
               protocol: TCP
           #livenessProbe:

@@ -1,0 +1,32 @@
+{{- if not .Values.rabbitmq.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-rabbitmq
+  labels:
+    {{- include "mytardis.labels" . | nindent 4 }}
+spec:
+  {{- if .Values.rabbitmq.externalName }}
+  externalName: {{ .Values.rabbitmq.externalName }}
+  type: ExternalName
+  {{- else }}
+  ports:
+    - protocol: TCP
+      port: 5672
+      targetPort: {{ include "mytardis.rabbitmq.port" . }}
+  {{- end }}
+{{- if not .Values.rabbitmq.externalName }}
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: {{ .Release.Name }}-rabbitmq
+  labels:
+    {{- include "mytardis.labels" . | nindent 4 }}
+subsets:
+  - addresses:
+      - ip: 1.1.1.1
+    ports:
+      - port: {{ include "mytardis.rabbitmq.port" . }}
+{{- end -}}
+{{- end -}}

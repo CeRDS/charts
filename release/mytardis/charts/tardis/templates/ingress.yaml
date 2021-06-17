@@ -10,7 +10,7 @@ apiVersion: extensions/v1beta1
 {{- end }}
 kind: Ingress
 metadata:
-  name: {{ $fullName }}
+  name: {{ include "tardis.fullname" . }}
   labels:
     {{- include "tardis.labels" . | nindent 4 }}
   {{- with .Values.ingress.annotations }}
@@ -29,32 +29,53 @@ spec:
     {{- end }}
   {{- end }}
   rules:
-    {{- range .Values.ingress.hosts }}
-    - host: {{ .host | quote }}
+  {{- range .Values.ingress.hosts }}
+    - host: {{ .host }}
       http:
         paths:
+        {{- if .paths }}
           {{- range .paths }}
           - path: {{ .path }}
             {{- if semverCompare ">=1.19-0" $KubeVersion }}
-            pathType: {{ .pathType | default "Prefix" | quote }}
+            pathType: {{ default .pathType "Prefix" }}
             backend:
               service:
-                name: {{ if .backend_service_name }}{{ printf "%s-%s" $fullName .backend_service_name }}{{ else }}{{ $fullName }}{{ end }}
+                name: {{ printf "%s-%s-headless" $fullName .serviceName | quote }}
                 port:
-                  {{- if eq .backend_service_name "django" }}
-                  number: {{ $.Values.django.service.port }}
-                  {{- else if eq .backend_service_name "static" }}
-                  number: {{ $.Values.static.service.port }}
-                  {{- end }}
-            {{- else -}}
+                  name: {{ default .servicePort .serviceName }}
+            {{- else }}
             backend:
-              serviceName: {{ if .backend_service_name }}{{ printf "%s-%s" $fullName .backend_service_name }}{{ else }}{{ $fullName }}{{ end }}
-              {{- if contains .backend_service_name "django" }}
-              servicePort: {{ $.Values.django.service.port }}
-              {{- else if contains .backend_service_name "static" }}
-              servicePort: {{ $.Values.static.service.port }}
-              {{- end }}
+              serviceName: {{ printf "%s-%s-headless" $fullName .serviceName | quote }}
+              servicePort: {{ default .servicePort .serviceName }}
             {{- end }}
           {{- end }}
-    {{- end }}
+        {{- else }}
+          - path: "/"
+            {{- if semverCompare ">=1.19-0" $KubeVersion }}
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ printf "%s-%s-headless" $fullName "django" | quote }}
+                port:
+                  name: django
+            {{- else }}
+            backend:
+              serviceName: {{ printf "%s-%s-headless" $fullName "django" | quote }}
+              servicePort: django
+            {{- end }}
+          - path: "/static/"
+            {{- if semverCompare ">=1.19-0" $KubeVersion }}
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ printf "%s-%s-headless" $fullName "static" | quote }}
+                port:
+                  name: static
+            {{- else }}
+            backend:
+              serviceName: {{ printf "%s-%s-headless" $fullName "static" | quote }}
+              servicePort: static
+            {{- end }}
+        {{- end }}
+  {{- end }}
   {{- end }}

@@ -28,8 +28,16 @@ tardis:
 
 postgresql:
   enabled: false
-  # NB: Sync with .settings.postgresql settings!
+  # postgresqlPassword required if configured via the Helm chart
+  # NB: Sync with .settings.postgresql.postgresqlPassword settings!
   postgresqlPassword: *postgresqlPwd
+  # External hosted database settings
+  # Required if Postgresql is an external service to this Helm chart
+  #addresses:
+  #  - ip: 1.1.1.1
+  # Used if the external datbase is referenced via a pre-existing DNS name
+  #externalName: my.database.example.com
+  #port: 5432
 
 rabbitmq:
   enabled: false
@@ -37,6 +45,13 @@ rabbitmq:
     # NB: Sync with .settings.rabbitmq.password
     password: *rabbitmqPwd
     username: *rabbitmqUser
+  # External hosted rabbitmq settings
+  # Required if RabbitMQ is an external service to this Helm chart
+  #addresses:
+  #  - ip: 1.1.1.1
+  # Used if the external RabbitMQ instance is referenced via a pre-existing DNS name
+  #externalName: my.rabbitmq.example.com
+  #port: 5672
 
 sshd:
   enabled: false
