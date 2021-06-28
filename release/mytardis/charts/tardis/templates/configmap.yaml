@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "mytardis.fullname" . }}
+  name: {{ include "tardis.fullname" . }}
   labels:
-    {{- include "mytardis.labels" . | nindent 4 }}
+    {{- include "tardis.labels" . | nindent 4 }}
 data:
   {{- with .Values.settings }}
   settings.py: |
@@ -23,8 +23,8 @@ data:
       {{- range .allowed_hosts }}
         {{ . | quote }},
       {{- end }}
-        '{{ include "mytardis.fullname" $ }}-django.{{ $.Release.Namespace }}.svc.{{ $.Values.global.clusterDomain }}',
-        '{{ include "mytardis.fullname" $ }}-django',
+        '{{ include "tardis.fullname" $ }}-django.{{ $.Release.Namespace }}.svc.{{ $.Values.global.clusterDomain }}',
+        '{{ include "tardis.fullname" $ }}-django',
         ".localhost",
         "127/8",
         "[::1]",
@@ -271,9 +271,9 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "mytardis.fullname" . }}-nginx
+  name: {{ include "tardis.fullname" . }}-nginx
   labels:
-    {{- include "mytardis.labels" . | nindent 4 }}
+    {{- include "tardis.labels" . | nindent 4 }}
 data:
   default.conf: |
     server {

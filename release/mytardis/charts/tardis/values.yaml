@@ -1,0 +1,258 @@
+# Default values for tardis.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+global:
+  clusterDomain: "cluster.local"
+  postgresql:
+    postgresqlDatabase: "mytardis"
+    postgresqlUsername: "mytardis"
+    #postgresqlPassword: ""
+    #servicePort: 5432
+  #rabbitmq:
+  #  #host: ""
+  #  #password: "CHANGEME"
+  #  port: &rabbitmqPort 5672
+  #  user: &rabbitmqUser "mytardis"
+  #  vhost: &rabbitmqVhost "/"
+  ##storageClassName: ""
+
+celery:
+  enabled: true
+  beat:
+    # NB: Not supported aat this time
+    autoscaling:
+      enabled: false
+    # Options: DEBUG|INFO|WARNING|ERROR|CRITICAL|FATAL
+    loglevel: "WARNING"
+    podAnnotations: {}
+    replicaCount: 1
+    resources: {}
+    schedule:
+      verify-files:
+        task: "tardis_portal.verify_dfos"
+        schedule: 300.0
+  worker:
+    autoscaling:
+      enabled: false
+    loglevel: "WARNING"
+    podAnnotations: {}
+    replicaCount: 1
+    result:
+      backend: "rpc://"
+      persistent: false
+    resources: {}
+
+django:
+  log_level: "WARNING"
+  service:
+    type: ClusterIP
+    port: 8000
+
+gunicorn:
+  # values: debug|info|warning|error|critical
+  log_level: "warning"
+  # TODO
+  extra_args: ""
+
+settings:
+  # Authentication
+  auth: {}
+  #  aaf:
+  #    key: "Get this from AAF"
+  #    secret: "Get this from AAF"
+  #    authUrl: "Get this from AAF"
+  #    tokenUrl: "Get this from AAF"
+  #    userInfoUrl: "Get this from AAF"
+  #  google:
+  #    key: "Get this from Google"
+  #    secret: "Get this from Google"
+
+  # Kubernetes internal service names added automatically to the allowed_hosts setting
+  allowed_hosts: []
+  #  - "CHANGEME.example.local"
+  caches:
+    default:
+      backend: 'django.core.cache.backends.db.DatabaseCache'
+      location: 'default_cache'
+    celery-locks:
+      backend: 'django.core.cache.backends.db.DatabaseCache'
+      location: 'celery_lock_cache'
+  debug: false
+  default:
+    from_email: "CHANGEME@example.local"
+    institution: "The University of Western Australia"
+    receiving_dir:
+      capacity: 1Gi
+      path: "/vol/staging"
+      #storageClassName: ""
+  email:
+    host: "localhost"
+    port: 25
+    from: "mytardis@CHANGEME.local"
+    subject_prefix: "[MyTardis]:"
+  file_store:
+    capacity: 1Gi
+    path: "/vol/store"
+    #storageClassName: ""
+  initialLocations: {}
+  installed_apps: []
+  # - "tardis.apps.mydata"
+  # - "tardis.apps.push_to"
+  logging:
+    # DEBUG|INFO|WARNING|ERROR|CRITICAL
+    #log_level: "WARNING"
+    module_log_level: "WARNING"
+    system_log_level: "WARNING"
+  raw_python: []
+  registrationOpen: false
+  require:
+    datafile:
+      checksums: true
+      sizes: true
+    validation_on_ingestion: true
+    valid_public_contacts: true
+  secret_key: "auhvfqbfabdsuivbaiupsdhvuiashukfda"
+  site:
+    id: 1
+    title: "MyTardis"
+  timezone: "UTC"
+  user:
+    initialGroups: []
+
+
+  postgresql:
+    conn_max_age: "None"
+    # NB: Sync with .postgresql settings
+    postgresqlDatabase: "mytardis"
+    postgresqlUsername: "mytardis"
+    postgresqlPassword: "CHANGEME"
+    #servicePort: 5432
+  rabbitmq: {}
+    #host: ""
+    # NB: Sync with .rabbitmq.auth.password
+    #password: "CHANGEME"
+    #port: ""
+    #user: ""
+    #vhost: ""
+  static:
+    files_path: "/app/static"
+    url_path_prefix: "/static/"
+  default_store_path: ""
+  chunks_store_path: ""
+  metadata_store_path: ""
+  admins:
+    - name: admin
+      email: admin@example.local
+  managers:
+    - name: manager
+      email: manager@example.local
+  ldap: {}
+  #  tls: true
+  #  url: "ldap.example.local"
+  #  user_login_attr: "sAMAccountName"
+  #  user_attr_map:
+  #    key1: "value"
+  #    key2: "value"
+  #  group_id_attr: "primaryGroupID"
+  #  group_attr_map:
+  #    key1: "value"
+  #    key2: "value"
+  #  admin_user: "admin"
+  #  admin_password: "password"
+  #  base: ""
+  #  user_base: ""
+  #  group_base: ""
+  celerybeat_schedule: {}
+  #  name1:
+  #    task: ""
+  #    schedule: ""
+  #    kwargs: ""
+  configMaps: []
+
+static:
+  host: "localhost"
+  service:
+    type: ClusterIP
+    port: 8080
+
+replicaCount: 1
+
+image:
+  repository: cerds/mytardis
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext:
+  fsGroup: 1001
+
+securityContext:
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1001
+
+ingress:
+  enabled: false
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+    # nginx.ingress.kubernetes.io/proxy-body-size: "4G"
+    # nginx.ingress.kubernetes.io/proxy-buffer-size: "8192k"
+    # nginx.ingress.kubernetes.io/proxy-connect-timeout: "2000"
+    # nginx.ingress.kubernetes.io/proxy-send-timeout: "2000"
+    # nginx.ingress.kubernetes.io/proxy-read-timeout: "2000"
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: "/"
+          serviceName: django
+        - path: "/static/"
+          serviceName: static
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
