@@ -3,6 +3,33 @@ entries:
   mytardis:
   - apiVersion: v2
     appVersion: 1d93176
+    created: "2021-06-28T00:23:20.683484328Z"
+    dependencies:
+    - condition: tardis.enabled
+      name: tardis
+      repository: ""
+      version: '>=0.1.0'
+    - condition: sshd.enabled
+      name: sshd
+      repository: ""
+      version: '>=0.1.0'
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.3.12
+    - condition: rabbitmq.enabled
+      name: rabbitmq
+      repository: https://charts.bitnami.com/bitnami
+      version: 8.11.3
+    description: A Helm chart for Kubernetes
+    digest: a0d04a7b38ec9268019a19bb17354578247bd97a18b25a5883d428ad8e01b0eb
+    name: mytardis
+    type: application
+    urls:
+    - https://github.com/CeRDS/charts/releases/download/mytardis-0.2.0/mytardis-0.2.0.tgz
+    version: 0.2.0
+  - apiVersion: v2
+    appVersion: 1d93176
     created: "2021-04-08T08:36:43.126739573Z"
     dependencies:
     - condition: sshd.enabled
@@ -47,4 +74,4 @@ entries:
     urls:
     - https://github.com/CeRDS/charts/releases/download/mytardis-0.1.0/mytardis-0.1.0.tgz
     version: 0.1.0
-generated: "2021-04-08T08:36:43.126752973Z"
+generated: "2021-06-28T00:23:20.683501629Z"
