@@ -129,6 +129,8 @@ data:
       {{- end }}
     )
 
+    MODULE_LOG_FILENAME = '/tmp/tardis.log'
+    SYSTEM_LOG_FILENAME = '/tmp/request.log'
     LOGGING = {
         'disable_existing_loggers': False,
         'handlers': {
@@ -195,8 +197,6 @@ data:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
 
-
-
     DEFAULT_ARCHIVE_FORMATS = ['tar']
     REDIS_VERIFY_MANAGER = False
 
@@ -244,13 +244,13 @@ data:
               queue_arguments={'x-max-priority': MAX_TASK_PRIORITY}),
     )
   {{- end }}
-  {{- with .Values.celery.beat }}
-    CELERYBEAT_SCHEDULE = {
-      {{- range $name,$params := .schedule }}
-        {{ $name | quote }}: {
-            'task': {{ $params.task | quote }},
-            'schedule': {{ $params.schedule }},
-            'kwargs': {'priority': DEFAULT_TASK_PRIORITY},
+    #{{- with .Values.celery.beat }}
+    #  CELERYBEAT_SCHEDULE = {
+    #    {{- range $name,$params := .schedule }}
+    #      {{ $name | quote }}: {
+    #          'task': {{ $params.task | quote }},
+    #          'schedule': {{ $params.schedule }},
+    #          'kwargs': {'priority': DEFAULT_TASK_PRIORITY},
     #        'schedule': timedelta(
     #            days={{ $params.schedule }}.get('days', 0),
     #            seconds={{ $params.schedule }}.get('seconds', 0),
@@ -261,10 +261,10 @@ data:
     #            weeks={{ $params.schedule }}.get('weeks', 0),
     #        ),
     #        'kwargs': params.get('kwargs', {'priority': DEFAULT_TASK_PRIORITY})
-        }
-      {{- end }}
-    }
-  {{- end }}
+    #      }
+    #  {{- end }}
+    #  }
+    #{{- end }}
 
     from .secrets import *
 ---

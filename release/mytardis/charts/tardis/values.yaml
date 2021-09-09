@@ -4,18 +4,18 @@
 
 global:
   clusterDomain: "cluster.local"
-  postgresql:
-    postgresqlDatabase: "mytardis"
-    postgresqlUsername: "mytardis"
-    #postgresqlPassword: ""
-    #servicePort: 5432
-  #rabbitmq:
+  postgresql: {}
+  #  postgresqlDatabase: "mytardis"
+  #  postgresqlUsername: "mytardis"
+  #  #postgresqlPassword: ""
+  #  #servicePort: 5432
+  rabbitmq: {}
   #  #host: ""
   #  #password: "CHANGEME"
   #  port: &rabbitmqPort 5672
   #  user: &rabbitmqUser "mytardis"
   #  vhost: &rabbitmqVhost "/"
-  ##storageClassName: ""
+  #storageClass: ""
 
 celery:
   enabled: true
@@ -55,6 +55,7 @@ gunicorn:
   # TODO
   extra_args: ""
 
+
 settings:
   # Authentication
   auth: {}
@@ -85,7 +86,7 @@ settings:
     receiving_dir:
       capacity: 1Gi
       path: "/vol/staging"
-      #storageClassName: ""
+      #storageClass: ""
   email:
     host: "localhost"
     port: 25
@@ -94,7 +95,7 @@ settings:
   file_store:
     capacity: 1Gi
     path: "/vol/store"
-    #storageClassName: ""
+    #storageClass: ""
   initialLocations: {}
   installed_apps: []
   # - "tardis.apps.mydata"
@@ -120,13 +121,12 @@ settings:
   user:
     initialGroups: []
 
-
   postgresql:
     conn_max_age: "None"
     # NB: Sync with .postgresql settings
-    postgresqlDatabase: "mytardis"
-    postgresqlUsername: "mytardis"
-    postgresqlPassword: "CHANGEME"
+    #postgresqlDatabase: ""
+    #postgresqlUsername: ""
+    #postgresqlPassword: ""
     #servicePort: 5432
   rabbitmq: {}
     #host: ""
@@ -172,6 +172,13 @@ settings:
 
 static:
   host: "localhost"
+  resources: {}
+  #  limits:
+  #    cpu: "1"
+  #    memory: 500Mi
+  #  requests:
+  #    cpu: "1"
+  #    memory: 100Mi
   service:
     type: ClusterIP
     port: 8080

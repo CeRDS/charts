@@ -4,11 +4,11 @@
 
 global:
   clusterDomain: "cluster.local"
-  postgresql:
-    postgresqlDatabase: "mytardis"
-    postgresqlUsername: "mytardis"
-    #postgresqlPassword: ""
-    #servicePort: 5432
+  postgresql: {}
+  #  postgresqlDatabase: "mytardis"
+  #  postgresqlUsername: "mytardis"
+  #  postgresqlPassword: ""
+  #  servicePort: 5432
   rabbitmq:
     #host: ""
     #password: &rabbitmqPwd "CHANGEME"
@@ -19,18 +19,14 @@ global:
 
 tardis:
   enabled: true
-  postgresql:
-    postgresqlPassword: &postgresqlPwd "mytardis"
-  rabbitmq:
-    auth:
-      password: &rabbitmqPwd "mytardis"
-      username: &rabbitmqUser "mytardis"
+  postgresql: {}
+  rabbitmq: {}
 
 postgresql:
   enabled: false
   # postgresqlPassword required if configured via the Helm chart
   # NB: Sync with .settings.postgresql.postgresqlPassword settings!
-  postgresqlPassword: *postgresqlPwd
+  #postgresqlPassword: *postgresqlPwd
   # External hosted database settings
   # Required if Postgresql is an external service to this Helm chart
   #addresses:
@@ -41,10 +37,10 @@ postgresql:
 
 rabbitmq:
   enabled: false
-  auth:
+  #auth:
     # NB: Sync with .settings.rabbitmq.password
-    password: *rabbitmqPwd
-    username: *rabbitmqUser
+  #  password: *rabbitmqPwd
+  #  username: *rabbitmqUser
   # External hosted rabbitmq settings
   # Required if RabbitMQ is an external service to this Helm chart
   #addresses:

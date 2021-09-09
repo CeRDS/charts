@@ -31,7 +31,14 @@ spec:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
         - name: {{ .Chart.Name }}-celery-beat
-          args: ['celery','beat','-l',{{ .Values.celery.beat.loglevel | upper | quote }}]
+          args:
+            - 'celery'
+            - 'beat'
+            - '-l'
+            - {{ .Values.celery.beat.loglevel | upper | quote }}
+            - '-s'
+            - '/tmp/celerybeat-schedule'
+            - '--pidfile='
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -58,6 +65,8 @@ spec:
             - mountPath: "/app/tardis/secrets"
               name: secrets
               readOnly: true
+            - mountPath: "/tmp"
+              name: tmp
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -80,3 +89,5 @@ spec:
         - name: "secrets"
           secret:
             secretName: {{ include "tardis.fullname" . }}
+        - name: "tmp"
+          emptyDir: {}
