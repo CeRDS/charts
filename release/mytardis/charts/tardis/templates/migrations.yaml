@@ -1,0 +1,59 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "tardis.fullname" . }}-migrations
+  labels:
+    {{- include "tardis.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  template:
+    metadata:
+      labels:
+        {{- include "tardis.selectorLabels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: {{ .Chart.Name }}-migrations
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: [ "/bin/sh", "-c" ]
+          args:
+            -
+              python3 manage.py migrate &&
+              python3 manage.py createcachetable default_cache &&
+              python3 manage.py createcachetable celery_lock_cache
+          volumeMounts:
+            - mountPath: "/app/tardis/settings.py"
+              name: settings-py
+              readOnly: true
+              subPath: settings.py
+            - mountPath: "/app/tardis/secrets"
+              name: secrets
+              readOnly: true
+
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: "settings-py"
+          configMap:
+            name: {{ include "tardis.fullname" . }}
+            items:
+              - key: "settings.py"
+                path: "settings.py"
+        - name: secrets
+          secret:
+            secretName: {{ include "tardis.fullname" . }}
+

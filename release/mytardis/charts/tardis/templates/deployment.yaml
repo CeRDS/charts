@@ -101,16 +101,13 @@ spec:
               name: nginx-run
 
       initContainers:
-        - name: {{ .Chart.Name }}-migrations
+        - name: {{ .Chart.Name }}-collectstatic
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: [ "/bin/sh", "-c" ]
           args:
             -
-              python3 manage.py migrate &&
-              python3 manage.py createcachetable default_cache &&
-              python3 manage.py createcachetable celery_lock_cache &&
-              python3 manage.py collectstatic
+              python3 manage.py collectstatic --noinput
           volumeMounts:
             - mountPath: {{ .Values.settings.static.files_path | quote }}
               name: static
